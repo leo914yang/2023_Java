@@ -3,22 +3,19 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
+import java.util.List;
 
 @Data
 @Entity
 @Table(name = "FLCONTROLTAB", schema = "EACHUSER")
-@IdClass(CompositeKey.class)
 public class MyEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int ID;
-    @Id
     private int PROCSEQ;
     private String BIZDATE;
     private String BATCHSEQ;
-
     private Timestamp START_TS;
-    // private Timestamp END_TS;
     private int TOTALCOUNT;
     private int TOTALAMT;
     private int REJECTCOUNT;

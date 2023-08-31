@@ -9,6 +9,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
@@ -19,9 +20,16 @@ public class MyScanner {
     private String nowDate;
     @Autowired
     private MyService myService;
+
     @Scheduled(fixedRateString = "${intervalInSecondsForScanner}")
-    public void tableScanner(){
+    public void tableScanner() {
         List<MyEntity> myEntityList = myService.getS2ByDate(nowDate);
         log.info("Automatic checking(Unprocessed files): " + myEntityList.size());
+//        List<Object[]> myTest = myService.getPairingNotCut();
+//        if (!myTest.isEmpty()) {
+//            for (Object[] element : myTest) {
+//                log.info(Arrays.toString(element));
+//            }
+//        }
     }
 }

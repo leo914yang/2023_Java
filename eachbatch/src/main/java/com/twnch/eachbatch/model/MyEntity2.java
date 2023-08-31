@@ -7,13 +7,11 @@ import javax.persistence.*;
 @Data
 @Entity
 @Table(name = "FLACHPTAB", schema = "EACHUSER")
-@IdClass(CompositeKey.class)
 public class MyEntity2 {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int ID;
     private String BIZDATE;
-    @Id
     private int PROCSEQ;
     private String BATCHSEQ;
     private String ACH_TXDATE;

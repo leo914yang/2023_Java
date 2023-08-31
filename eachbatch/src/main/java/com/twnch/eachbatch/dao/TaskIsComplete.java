@@ -30,19 +30,20 @@ public class TaskIsComplete {
     private String result;
 
     public void isComplete(List<MyEntity2> processingList, List<MyEntity2> cutInLineList){
-        //log.info("isComplete start");
-        if(processingList.isEmpty() && cutInLineList.isEmpty()){
-
-            List<MyEntity> completeList = myService.getComplete(myBizdate);
-            //log.info("completeList: " + completeList.toString());
-            MyEntity myEntity = completeList.get(0);
-            myEntity.setSTATUS("5");
-            Timestamp endTimestamp = new Timestamp(System.currentTimeMillis());
-            myEntity.setLASTMODIFYDT(endTimestamp);
-            myService.update(myEntity);
-            myMoveFile.myMove(pending, result);
-            log.info("資料完成, 狀態更新為5, 移動到result, 資料為: " + myEntity);
+        try {
+            if (processingList.isEmpty() && cutInLineList.isEmpty()) {
+                List<MyEntity> completeList = myService.getComplete(myBizdate);
+                MyEntity myEntity = completeList.get(0);
+                myEntity.setSTATUS("5");
+                Timestamp endTimestamp = new Timestamp(System.currentTimeMillis());
+                myEntity.setLASTMODIFYDT(endTimestamp);
+                myService.update(myEntity);
+                myMoveFile.myMove(pending, result);
+                log.info("資料完成, 狀態更新為5, 資料為: " + myEntity);
+                log.info("呼叫MyMoveFile檢查重複後移動檔案至result");
+            }
+        }catch (Exception e){
+            log.error("TaskIsComplete發生異常: " + e);
         }
-        //log.info("isComplete end");
     }
 }

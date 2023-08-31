@@ -1,7 +1,6 @@
 package com.twnch.eachbatch.service.activemq;
 
 import org.springframework.jms.core.JmsTemplate;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 @Service

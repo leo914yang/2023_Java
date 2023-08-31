@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class MyService {
@@ -30,10 +31,15 @@ public class MyService {
     public List<MyEntity2> getSelected(String myBizdate, int procSeqValue){
         return repository2.getSelectedData(myBizdate, procSeqValue);
     }
+    public List<MyEntity2> getAllDataByDate(String bizdate){ return  repository2.findAllDataByDate(bizdate);}
     public void update(MyEntity entity) {
         repository.save(entity);
     }
     public void update(MyEntity2 entity) {
         repository2.save(entity);
     }
+    public List<Object[]> getTest(){return repository.findTest(); }
+    public List<Object[]> getPairingCut(){return repository.findPairingCut(); }
+    public List<Object[]> getPairingNotCut(){return repository.findPairingNotCut(); }
+
 }

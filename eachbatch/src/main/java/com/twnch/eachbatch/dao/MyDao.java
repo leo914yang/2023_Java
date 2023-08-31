@@ -2,18 +2,17 @@ package com.twnch.eachbatch.dao;
 
 import com.twnch.eachbatch.model.MyEntity;
 import com.twnch.eachbatch.model.MyEntity2;
+import com.twnch.eachbatch.util.FileNameAndContent;
 import com.twnch.eachbatch.util.MyMoveFile;
-import com.twnch.eachbatch.service.activemq.MyService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -31,7 +30,7 @@ public class MyDao {
     @Autowired
     private MyMoveFile myMoveFile;
     @Autowired
-    private MyService myService;
+    private FileNameAndContent fileNameAndContent;
     @Value("${sleepDurationForDao}")
     private int threadSleepTime;
     @Value("${intervalInSecondsForDao}")
@@ -54,6 +53,8 @@ public class MyDao {
 
         // Schedule a task to run every X seconds
         executorService.scheduleAtFixedRate(() -> {
+
+            // 一般的counter++再多執行緒底下不是很安全
             AtomicInteger myCounter = new AtomicInteger(1);
             // 檢查是否有隱藏檔.DS_Store後將正確的檔案名稱加入fileNameArrayList
             // 正確的內容加入fileContentArrayList
@@ -64,11 +65,12 @@ public class MyDao {
                 for (File file : files) {
                     if (file.isFile() && !file.getName().equals(".DS_Store")) {
                         fileNameArrayList.add(file.getName());
-                        fileContentArrayList = readAndProcessFileContent(filePath + "/" + file.getName());
                     }
                 }
-                Collections.reverse(fileNameArrayList);
-                Collections.reverse(fileContentArrayList);
+                // 檔案讀取順序錯亂 因此先依照檔名進行排序後再將檔案讀出來
+                Collections.sort(fileNameArrayList);
+                fileNameArrayList.forEach(list -> fileContentArrayList = fileNameAndContent.readAndProcessFileContent(
+                        filePath + "/" + list, fileContentArrayList));
             }
 
             // 雙層for迴圈 j控制第幾個檔案 i控制第幾筆交易
@@ -76,7 +78,7 @@ public class MyDao {
                 String concatenatedLines = fileContentArrayList.get(j);
                 String[] columns = concatenatedLines.split("\n");
 
-                // columns[0] == "控制首錄", 1~6 == "明細錄", 7 == "控制尾錄"
+                // columns[0] == "控制首錄", 1~columns.length - 2 == "明細錄", columns.length - 1 == "控制尾錄"
                 MyEntity myEntity = new MyEntity();
                 int indexStart = fileNameArrayList.get(j).lastIndexOf("/") + 1;
                 int indexEnd = fileNameArrayList.get(j).lastIndexOf(".");
@@ -89,7 +91,7 @@ public class MyDao {
                 myEntity.setBIZDATE(columns[0].substring(9, 17));
                 myEntity.setPROCSEQ(changePerCaseCounter);
                 myEntity.setTOTALCOUNT(columns.length - 2);
-                myEntity.setTOTALAMT(Integer.parseInt(columns[columns.length-1].substring(39, 55)));
+                myEntity.setTOTALAMT(Integer.parseInt(columns[columns.length - 1].substring(39, 55)));
                 myEntity.setREJECTCOUNT(0);
                 myEntity.setREJECTAMT(0);
                 myEntity.setACCEPTCOUNT(myEntity.getTOTALCOUNT() - myEntity.getREJECTCOUNT());
@@ -139,32 +141,9 @@ public class MyDao {
 
             myMoveFile.myMove(source, historydata);
             myMoveFile.myMove(historydata, pending);
-            log.info("檔案移動至pending和historydata完成");
+            log.info("呼叫MyMoveFile檢查重複後移動檔案至pending和historydata");
             // 資料刪除後就沒辦法繼續上傳了因此先註解掉
             //myMoveFile.myDelete();
         }, 0, intervalInSecondsForDao, TimeUnit.SECONDS);
-
-        } //dataToFlcontroltab() end
-
-    public List<String> readAndProcessFileContent(String filePath) {
-        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
-            String line = "";
-            String nextLine = reader.readLine();
-            StringBuilder fileContent = new StringBuilder();
-            while (nextLine != null) {
-                line = nextLine;
-                nextLine = reader.readLine();
-                if (nextLine != null) {
-                    fileContent.append(line).append("\n");
-                } else {
-                    fileContent.append(line);
-                }
-            }
-
-            fileContentArrayList.add(fileContent.toString());
-        } catch (Exception e) {
-            log.info(String.valueOf(e));
-        }
-        return fileContentArrayList;
-    }
+    } //dataToFlcontroltab() end
 }

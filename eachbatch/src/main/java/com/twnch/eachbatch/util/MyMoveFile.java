@@ -17,11 +17,12 @@ public class MyMoveFile {
             Path sourcePath = Paths.get(mySource);
             Path destinationPath = Paths.get(myDestination);
 
+            // Files.walk(sourcePath)這個方法用於遞歸地遍歷指定的源路徑 sourcePath 下的所有文件和子目錄
+            // .filter(Files::isRegularFile)：這個操作會對遍歷到的每個路徑進行過濾, 只保留其中的普通文件（非目錄）
             Files.walk(sourcePath)
                     .filter(Files::isRegularFile)
                     .forEach(file -> {
-                        //Path relativePath = sourcePath.relativize(file);
-                        //Path pendingFile = pendingPath.resolve(relativePath);
+                        // Path sourcefile = sourcePath.relativize(file) 計算每個文件相對於源路徑的相對路徑
                         Path sourcefile = sourcePath.relativize(file);
                         Path destinationFile = destinationPath.resolve(sourcefile);
                         if (!Files.exists(destinationFile)) {
@@ -32,10 +33,9 @@ public class MyMoveFile {
                             }
                         }
                     });
-        } catch (IOException e) {
+        } catch (IOException | SecurityException e) {
             log.info(String.valueOf(e));
         }
-
     }
 
     public void myDelete(){
@@ -54,7 +54,7 @@ public class MyMoveFile {
                             }
                         });
             }
-        } catch (IOException e) {
+        } catch (IOException | SecurityException e) {
             log.info(String.valueOf(e));
         }
     }

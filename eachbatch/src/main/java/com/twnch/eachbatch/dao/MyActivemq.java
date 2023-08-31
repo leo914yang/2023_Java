@@ -1,6 +1,7 @@
 package com.twnch.eachbatch.dao;
 
 import com.google.gson.Gson;
+import com.twnch.eachbatch.util.MyCountAndAmt;
 import com.twnch.eachbatch.util.SelectData;
 import com.twnch.eachbatch.model.MyEntity;
 import com.twnch.eachbatch.model.MyEntity2;
@@ -41,6 +42,8 @@ public class MyActivemq {
     private PattenFinder pattenFinder;
     @Autowired
     private SelectData selectData;
+    @Autowired
+    private MyCountAndAmt myCountAndAmt;
 
     public void pushToActivemq() throws InterruptedException {
         Thread.sleep(threadSleepTime);
@@ -50,17 +53,15 @@ public class MyActivemq {
         ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
         // Schedule a task to run every X seconds
         executorService.scheduleAtFixedRate(() -> {
-            // 確保我一筆資料全部做完才會撈新的
-            //log.info("pList: " + processingList.size() + " cList: " + cutInLineList.size());
             if (processingList.isEmpty() && cutInLineList.isEmpty()) {
                 List<MyEntity> myCutList;
                 List<MyEntity> myEntityList;
 
                 String myProcseq = "";
-                // myCutList存放Cut_In_Line = T的資料
+                // myCutList存放Cut_In_Line = Y的資料
                 myCutList = myService.getCutByTable1(myBizdate);
                 //log.info(myCutList.toString());
-                MyEntity myEntity = new MyEntity();
+                MyEntity myEntity;
 
                 String tempProcseq;
                 int procSeqValue;
@@ -69,6 +70,7 @@ public class MyActivemq {
                     myEntity = myCutList.get(0);
                     myProcseq = myCutList.toString();
                 } else {
+                    // 撈出STATUS=2的資料塞進myEntityList
                     myEntityList = myService.getS2ByDate(myBizdate);
                     if (!myEntityList.isEmpty()) {
                         //log.info("!!!" + myEntityList.toString());
@@ -77,9 +79,6 @@ public class MyActivemq {
                     } else
                         return;
                 }
-
-                // Demo時秀出myProcseq
-                //log.info("!!!: " + myProcseq);
 
                 // 更改狀態避免重複撈
                 myEntity.setSTATUS("4");
@@ -107,7 +106,7 @@ public class MyActivemq {
             MyEntity myEntityForCount = null;
             int procAmtInt = 0;
             int procCountInt = 0;
-            Map<String, Object> countAndAmtMap = processCountAndAmt(myEntityForCount, procAmtInt, procCountInt);
+            Map<String, Object> countAndAmtMap = myCountAndAmt.processCountAndAmt(myEntityForCount, procAmtInt, procCountInt);
             myEntityForCount = (MyEntity) countAndAmtMap.get("myEntityForCount");
             procAmtInt = (int) countAndAmtMap.get("procAmtInt");
             procCountInt = (int) countAndAmtMap.get("procCountInt");
@@ -123,52 +122,9 @@ public class MyActivemq {
             // 傳送參數1去取出交易金額, 用參數3去扣掉取出的金額得出當前交易結果
             // 參數2用於指定要更新的FLCONTROLTAB資料
             selectData.sendAndUpdate(jsonList, myEntityForCount, procAmtInt, procCountInt);
-
             taskIsComplete.isComplete(processingList, cutInLineList);
-
         }, 0, intervalInSecondsForActivemq, TimeUnit.SECONDS);
     }
-
-    public Map<String, Object> processCountAndAmt(MyEntity myEntityForCount, int procAmtInt, int procCountInt) {
-        List<MyEntity> myEntityForCountList;
-        String myEntityForCountString;
-        String procCountString;
-        String myEntityForProcAmt;
-        String procAmtString;
-        Map<String, Object> countAndAmtMap = new HashMap<>();
-        try {
-            myEntityForCountList = myService.getComplete(myBizdate);
-            myEntityForCount = myEntityForCountList.get(0);
-            myEntityForProcAmt = myEntityForCount.toString();
-            // pattenFinder返回值為null 導致程式執行錯誤
-            procAmtString = pattenFinder.findMyPatten("PROCAMT", myEntityForProcAmt);
-            // 交易總金額
-            procAmtInt = Integer.parseInt(procAmtString.split("PROCAMT=")[1]);
-            myEntityForCountString = myEntityForCount.toString();
-            procCountString = pattenFinder.findMyPatten("PROCCOUNT", myEntityForCountString);
-            // procCountString的值為PROCCOUNT=X 因此將他split開
-            procCountInt = (Integer.parseInt(procCountString.split("PROCCOUNT=")[1]));
-
-        } catch (IndexOutOfBoundsException e) {
-            // 如果無法從 myEntityForCountList 中獲取資料
-            // 處理例外，記錄或顯示錯誤訊息，執行適當的後續處理
-            log.info(e.toString());
-        } catch (NullPointerException e) {
-            // 如果 pattenFinder 返回 null
-            // 處理例外，記錄或顯示錯誤訊息，執行適當的後續處理
-            log.info(e.toString());
-        } catch (NumberFormatException e) {
-            // 如果轉換成整數失敗
-            // 處理例外，記錄或顯示錯誤訊息，執行適當的後續處理
-            log.info(e.toString());
-        }
-        countAndAmtMap.put("myEntityForCount", myEntityForCount);
-        countAndAmtMap.put("procAmtInt", procAmtInt);
-        countAndAmtMap.put("procCountInt", procCountInt);
-        return countAndAmtMap;
-    }
-
-
 }
 
 
