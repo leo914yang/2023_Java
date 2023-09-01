@@ -12,7 +12,6 @@ import org.springframework.stereotype.Controller;
 import java.io.File;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -143,7 +142,7 @@ public class MyDao {
             myMoveFile.myMove(historydata, pending);
             log.info("呼叫MyMoveFile檢查重複後移動檔案至pending和historydata");
             // 資料刪除後就沒辦法繼續上傳了因此先註解掉
-            //myMoveFile.myDelete();
+            myMoveFile.myDelete();
         }, 0, intervalInSecondsForDao, TimeUnit.SECONDS);
     } //dataToFlcontroltab() end
 }

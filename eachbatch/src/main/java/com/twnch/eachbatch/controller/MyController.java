@@ -1,6 +1,7 @@
 package com.twnch.eachbatch.controller;
 
 import com.twnch.eachbatch.dao.MyActivemq;
+import com.twnch.eachbatch.dao.MyActivemq2;
 import com.twnch.eachbatch.dao.MyDao;
 import com.twnch.eachbatch.service.activemq.Consumer;
 import com.twnch.eachbatch.util.MyScanner;
@@ -22,6 +23,8 @@ public class MyController implements CommandLineRunner {
     private MyDao myDao;
     @Autowired
     private MyActivemq myActivemq;
+    @Autowired
+    private MyActivemq2 myActivemq2;
     @Autowired
     private Consumer consumer;
     @Autowired

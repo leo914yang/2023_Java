@@ -117,12 +117,16 @@ public class MyActivemq {
             // 利用Gson將最多兩筆json資料合併
             Gson gson = new Gson();
             String json = gson.toJson(jsonList);
-            messageSender.sendMessage("myQueue", json);
-            log.info("資料傳送至Queue, 資料為: " + json);
+            if (!json.isEmpty()) {
+                messageSender.sendMessage("myQueue", json);
+                log.info("資料傳送至Queue, 資料為: " + json);
+                selectData.sendAndUpdate(jsonList, myEntityForCount, procAmtInt, procCountInt);
+                taskIsComplete.isComplete(processingList, cutInLineList);
+            }
+
             // 傳送參數1去取出交易金額, 用參數3去扣掉取出的金額得出當前交易結果
             // 參數2用於指定要更新的FLCONTROLTAB資料
-            selectData.sendAndUpdate(jsonList, myEntityForCount, procAmtInt, procCountInt);
-            taskIsComplete.isComplete(processingList, cutInLineList);
+
         }, 0, intervalInSecondsForActivemq, TimeUnit.SECONDS);
     }
 }

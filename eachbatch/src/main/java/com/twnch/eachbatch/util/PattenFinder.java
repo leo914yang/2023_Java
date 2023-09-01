@@ -18,7 +18,7 @@ public class PattenFinder {
         if(myMatcher.find())
             return myMatcher.group();
         else
-            return null;
+            return "";
     }
 
 }

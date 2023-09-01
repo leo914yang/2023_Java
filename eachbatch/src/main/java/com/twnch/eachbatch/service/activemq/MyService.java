@@ -38,6 +38,10 @@ public class MyService {
     public void update(MyEntity2 entity) {
         repository2.save(entity);
     }
+    public void update(List<MyEntity2> myEntity2List) {
+        repository2.saveAll(myEntity2List);
+    }
+
     public List<Object[]> getTest(){return repository.findTest(); }
     public List<Object[]> getPairingCut(){return repository.findPairingCut(); }
     public List<Object[]> getPairingNotCut(){return repository.findPairingNotCut(); }
